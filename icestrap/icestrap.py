@@ -41,7 +41,7 @@ if len(sys.argv) > 1 and sys.argv[1] is not None:
     if sys.argv[1] == "build":
         debug_build()
     elif sys.argv[1] == "run":
-        args = sys.argv[1:].copy()
+        args = sys.argv[2:].copy()
         debug_build()
         debug_run(args)
     elif sys.argv[1] == "clean":
