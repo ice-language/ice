@@ -5,7 +5,7 @@ import time
 
 project_path = os.getcwd()
 src_path = os.path.join(project_path, "src")
-driplib_path = os.path.join(project_path, "../../driplib")
+driplib_path = os.path.join(project_path, "../../libcube")
 driplib_path = os.path.abspath(driplib_path)
 print(driplib_path)
 
@@ -19,18 +19,18 @@ def debug_build_shared_driplib():
     maybe_mkdir()
     os.chdir(driplib_path)
     current = time.time()
-    result = sp.run(["nasm", "-f", "elf64", "-g", "-F", "dwarf", "driplib.asm", "-o", "../ice/icestrap/build/driplib.o"])
+    result = sp.run(["nasm", "-f", "elf64", "-g", "-F", "dwarf", "libcube.asm", "-o", "../ice/cube/build/libcube.o"])
     if result.returncode != 0:
         print("Error compiling driplib")
         sys.exit(1)
     else:
-        print("Successful building driplib, took: ", round((time.time() - current) * 1000), "ms")
+        print("Successful building libcube, took: ", round((time.time() - current) * 1000), "ms")
     
     os.chdir(project_path)
     current = time.time()
-    result = sp.run(["ld", "-shared", "build/driplib.o", "-o", "build/driplib.so"])
+    result = sp.run(["ld", "-shared", "build/libcube.o", "-o", "build/libcube.so"])
     if result.returncode != 0:
-        print("Error linking driplib")
+        print("Error linking libcube")
         sys.exit(1)
     else:
         print("Successful linking libdrip, took: ", round((time.time() - current) * 1000), "ms")
@@ -49,7 +49,7 @@ def debug_build():
     
     os.chdir(project_path)
     current = time.time()
-    result = sp.run(["ld", '--dynamic-linker',"/lib/ld-linux-x86-64.so.2", "build/driplib.so", "build/main.o", "-o", "build/main"])
+    result = sp.run(["ld", '--dynamic-linker',"/lib/ld-linux-x86-64.so.2", "build/libcube.so", "build/main.o", "-o", "build/main"])
     if result.returncode != 0:
         print("Error linking output")
         sys.exit(1)

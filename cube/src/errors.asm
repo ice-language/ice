@@ -1,4 +1,4 @@
-%include "../../../driplib/include/linux.inc"
+%include "../../../libcube/include/linux.inc"
 
 [section .rodata]:
     errorFileMissing db "No file given", 10

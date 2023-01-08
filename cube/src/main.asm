@@ -1,4 +1,4 @@
-%include "../../../driplib/include/linux.inc"
+%include "../../../libcube/include/linux.inc"
 %include "errors.asm"
 
 [section .rodata]
