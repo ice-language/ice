@@ -1,14 +1,10 @@
-%include "linux.inc"
-%include "libcold.asm"
-; %include "mem.asm"
+%include "../../../driplib/include/linux.inc"
+%include "errors.asm"
 
-
-[section .data]
+[section .rodata]
     newline db 10
     text0 db "Open File: "
     text0Len equ $ - text0
-    text1 db "No file given", 10
-    text1Len equ $ - text1
 
 [section .bss]
     argCount resb 8
@@ -16,53 +12,60 @@
     argStart resb 8 ; ptr ptr[char]
     ; path and argStart must be derefed 2x
     ; argStart indexing is at the second deref
+
 [section .text]
 global _start
 
+extern strlen
+extern printc
+extern prints
+extern printv
+
+
 _start:
+    push rbp
+    mov rbp, rsp ; prologue
+
     ; copy command line argument pointers
     ; init stack looks like this
-    ; argument Count <- rsp
+    ; push thingy <-
+    ; argument Count
     ; path
     ; argument 1 <- root compilation file path
     ; argument n
     ; rsp
     ; rbp <- rbp
-    mov rax, [rsp]
+    mov rax, [rsp - 8]
     dec rax ; dec to treat arguments different from the path
+    
+    jz _error_file_missing ; no file supplied in cmd args, end
     mov [argCount], rax
     mov rax, rsp
-    add rax, 8
+    add rax, 16
     mov [path], rax
     add rax, 8
     mov [argStart], rax
     
-    push rbp
-    mov rbp, rsp ; prologue
-    
-    mov rax, [argCount]
-    cmp rax, 0
-    jz _no_param_ext ; no file supplied in cmd args, end
-            
-    mov rsi, text0
+    lea rsi, text0
     mov rdx, text0Len
-    call _print
+    call prints
    
     mov rsi, [argStart]
     mov rsi, [rsi]
-    call strlen
-    mov rdx, rax
-    call _print
+    call printc
     mov r8, rsi
 
     mov rsi, newline
     mov rdx, 1
-    call _print
+    call prints
 
     mov rdi, r8
     mov rax, SYS_OPEN ; open file
     mov rsi, O_RDONLY ; read only
     syscall ; rax = file descriptor (16bit) (fs)
+
+    cmp eax, 0
+    jl _error_file_not_exist
 
     push rax
     sub rsp, 144 ; 144 byte "buffer" for the fstat struct
@@ -93,30 +96,3 @@ _start:
     pop rbp
 
     exit 69
-
-; prints null terminated string to stdout
-; calls _string_length
-; takes: rsi
-; modifies: rax, rdi, rdx, rcx
-_printC:
-    call strlen_sse4
-    mov rdx, rax
-    mov rdi, STDOUT
-    mov rax, SYS_WRITE
-    syscall
-    ret
-
-; prints string
-; takes: rsi, rdx
-; modifies: rax, rdi
-_print:
-    mov rax, SYS_WRITE
-    mov rdi, STDOUT
-    syscall
-    ret
-
-_no_param_ext:
-    mov rsi, text1
-    mov rdx, text1Len
-    call _print
-    exit 7 
